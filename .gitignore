@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# IDE
+.vscode/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Sensitive config
+demo/src/main/resources/application.properties
+
+# Package files (as per user request)
+package.json
+package-lock.json
+
+# Other
+patch.diff
+Postman_Collection_Online_Billboard_Booking.json
+TODO.md
