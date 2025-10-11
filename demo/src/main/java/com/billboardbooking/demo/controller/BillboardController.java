@@ -67,6 +67,7 @@ public class BillboardController {
             billboard.setName(updatedBillboard.getName());
             billboard.setLocation(updatedBillboard.getLocation());
             billboard.setAddress(updatedBillboard.getAddress());
+            billboard.setPhone(updatedBillboard.getPhone());
             billboard.setLat(updatedBillboard.getLat());
             billboard.setLng(updatedBillboard.getLng());
             billboard.setSize(updatedBillboard.getSize());

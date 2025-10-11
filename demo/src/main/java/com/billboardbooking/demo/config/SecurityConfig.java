@@ -73,7 +73,7 @@ public class SecurityConfig {
                 return corsConfig;
             }))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/login", "/auth/register/**", "/billboards", "/billboards/*", "/bookings").permitAll()
+                .requestMatchers("/auth/login", "/auth/register/**", "/billboards", "/billboards/*", "/bookings", "/uploads/**").permitAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/owner/**").hasRole("OWNER")

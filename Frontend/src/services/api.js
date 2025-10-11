@@ -44,6 +44,7 @@ export const ownerAPI = {
     formData.append('name', billboardData.name);
     formData.append('location', billboardData.location);
     formData.append('address', billboardData.address);
+    formData.append('phone', billboardData.phone);
     formData.append('lat', billboardData.lat);
     formData.append('lng', billboardData.lng);
     formData.append('size', billboardData.size);
@@ -62,6 +63,7 @@ export const ownerAPI = {
     formData.append('name', billboardData.name);
     formData.append('location', billboardData.location);
     formData.append('address', billboardData.address);
+    formData.append('phone', billboardData.phone);
     formData.append('lat', billboardData.lat);
     formData.append('lng', billboardData.lng);
     formData.append('size', billboardData.size);
@@ -74,6 +76,7 @@ export const ownerAPI = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
+  deleteBillboard: (id) => api.delete(`/owner/billboards/${id}`),
 };
 
 export default api;

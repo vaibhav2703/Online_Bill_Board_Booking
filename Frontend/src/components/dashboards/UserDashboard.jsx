@@ -1,57 +1,349 @@
 import React, { useState, useEffect } from 'react';
-import { billboardAPI, bookingAPI } from '../../services/api';
-import BillboardMap from '../map/BillboardMap';
-import BookingForm from '../forms/BookingForm';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Badge } from '../ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { MapPin, Search, Filter, Calendar, DollarSign } from 'lucide-react';
+import SimpleMapSearch from '../SimpleMapSearch';
+import BookingDialog from '../BookingDialog';
+import { ProfilePage } from '../profile/ProfilePage';
+import { ProfileSettings } from '../profile/ProfileSettings';
+import { billboardAPI } from '../../services/api';
 
-function UserDashboard() {
-  const [billboards, setBillboards] = useState([]);
-  const [selectedBillboard, setSelectedBillboard] = useState(null);
-  const [searchLocation, setSearchLocation] = useState({ lat: 18.501489, lng: 73.858904 });
-  const [searchRadius, setSearchRadius] = useState(50);
+const UserDashboard = ({ showProfile, onCloseProfile }) => {
+  const [view, setView] = useState('list');
 
   useEffect(() => {
-    loadBillboards();
+    if (showProfile) {
+      setView('profile');
+    }
+  }, [showProfile]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedBillboard, setSelectedBillboard] = useState(null);
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [billboards, setBillboards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    const fetchBillboards = async () => {
+      try {
+        const response = await billboardAPI.getAll();
+        const availableBillboards = response.data.filter(billboard => billboard.status === 'available');
+        setBillboards(availableBillboards);
+      } catch (error) {
+        console.error('Error fetching billboards:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBillboards();
   }, []);
 
-  const loadBillboards = async () => {
-    try {
-      const response = await billboardAPI.search(searchLocation.lat, searchLocation.lng, searchRadius);
-      setBillboards(response.data);
-    } catch (err) {
-      console.error('Failed to load billboards:', err);
-    }
-  };
+  const filteredBillboards = billboards.filter(billboard =>
+    billboard.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    billboard.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    billboard.address.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const handleSearch = () => {
-    loadBillboards();
-  };
-
-  const handleBook = (billboard) => {
+  const handleBookBillboard = (billboard) => {
     setSelectedBillboard(billboard);
+    setShowBookingDialog(true);
   };
+
+  const handleBookingSubmit = (bookingData) => {
+    console.log('Booking submitted:', bookingData);
+    setShowBookingDialog(false);
+    setSelectedBillboard(null);
+    // In real app, submit to API
+  };
+
+  if (view === 'profile') {
+    return (
+      <ProfilePage
+        onBack={() => {
+          setView('list');
+          onCloseProfile();
+        }}
+        onEditProfile={() => setView('settings')}
+      />
+    );
+  }
+
+  if (view === 'settings') {
+    return (
+      <ProfileSettings onBack={() => setView('profile')} />
+    );
+  }
+
+  if (view === 'map') {
+    return (
+      <div className="h-full">
+        <div className="p-4 border-b bg-white">
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
+            <h1 className="text-xl font-semibold">Find Billboards</h1>
+            <Button variant="outline" onClick={() => setView('list')}>
+              View List
+            </Button>
+          </div>
+        </div>
+        <SimpleMapSearch
+          billboards={filteredBillboards}
+          onSelectBillboard={handleBookBillboard}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h2>User Dashboard</h2>
-      <div>
-        <h3>Search Billboards</h3>
-        <label>
-          Latitude: <input value={searchLocation.lat} onChange={e => setSearchLocation({...searchLocation, lat: parseFloat(e.target.value)})} />
-        </label>
-        <label>
-          Longitude: <input value={searchLocation.lng} onChange={e => setSearchLocation({...searchLocation, lng: parseFloat(e.target.value)})} />
-        </label>
-        <label>
-          Radius (km): <input value={searchRadius} onChange={e => setSearchRadius(parseFloat(e.target.value))} />
-        </label>
-        <button onClick={handleSearch}>Search</button>
+    <div className="p-[-0.5rem] max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Find Billboard Advertising</h1>
+          <p className="text-muted-foreground">Discover and book premium billboard locations</p>
+        </div>
+
+        <button className="px-4 py-2 flex items-center justify-center rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-[#030213] text-primary-foreground hover:bg-[#31313b]"
+          onClick={() => setView('map')}>
+          <MapPin className="h-4 w-4 mr-2" />
+          View Map
+        </button>
       </div>
-      <BillboardMap billboards={billboards} onBook={handleBook} />
-      {selectedBillboard && (
-        <BookingForm billboard={selectedBillboard} onClose={() => setSelectedBillboard(null)} />
+
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Search by location, title, or address..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Button variant="outline">
+          <Filter className="h-4 w-4 mr-2" />
+          Filters
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold">{filteredBillboards.length}</p>
+                <p className="text-muted-foreground">Available Billboards</p>
+              </div>
+              <MapPin className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold">
+                  ${filteredBillboards.length > 0 ? Math.min(...filteredBillboards.map(b => b.price)).toLocaleString() : '0'}
+                </p>
+                <p className="text-muted-foreground">Starting From</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold">24/7</p>
+                <p className="text-muted-foreground">Instant Booking</p>
+              </div>
+              <Calendar className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="relative w-full">
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading billboards...</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 grid-rows-2 gap-6">
+              {(() => {
+                const maxCards = 18;
+                const displayedBillboards = filteredBillboards.slice(0, maxCards);
+                const cardsPerPage = 6;
+                const totalPages = Math.ceil(displayedBillboards.length / cardsPerPage);
+                const currentCards = displayedBillboards.length <= 6 ? displayedBillboards : displayedBillboards.slice(currentPage * cardsPerPage, (currentPage + 1) * cardsPerPage);
+                return currentCards.map((billboard) => {
+                  const imageUrl = billboard.image ? (billboard.image.startsWith('uploads') ? `http://localhost:8080/uploads/${billboard.image.replace(/^uploads[\/\\]/, '').replace(/\\/g, '/')}` : `data:image/png;base64,${billboard.image}`) : '/placeholder.png';
+                  return (
+                    <Card
+                      key={billboard.id}
+                      className="overflow-hidden w-72 flex flex-col auto-cols-max cursor-pointer"
+                      onClick={() => {
+                        setSelectedBillboard(billboard);
+                        setShowDetailsDialog(true);
+                      }}
+                    >
+                      <div className="relative aspect-video">
+                        <img
+                          src={imageUrl}
+                          alt={billboard.name}
+                          className="w-full h-full object-contain"
+                        />
+                        <Badge className="absolute top-2 right-2 bg-green-100 text-green-800">
+                          Available
+                        </Badge>
+                      </div>
+
+                      <CardHeader className="mt-[-40px]">
+                        <CardTitle className="flex items-center justify-between font-bold">
+                          {billboard.name}
+                        </CardTitle>
+                        <CardDescription>{billboard.location}</CardDescription>
+                      </CardHeader>
+
+                      <CardContent className="mt-[-35px] p-6">
+                        <div className="flex items-center flex-col space-y-4">
+                          <p className="text-sm line-clamp-2">{billboard.description}</p>
+                          <div className="flex justify-between items-center space-x-12 text-sm">
+                            <span className="text-muted-foreground">Size: {billboard.size}</span>
+                            <span className="font-semibold">${billboard.price.toLocaleString()}/month</span>
+                          </div>
+                          <button
+                            className="w-full px-4 py-2 flex items-center justify-center rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-[#030213] text-primary-foreground hover:bg-[#31313b]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleBookBillboard(billboard);
+                            }}
+                          >
+                            Book Now
+                          </button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                });
+              })()}
+            </div>
+
+            {(() => {
+              const maxCards = 18;
+              const displayedBillboards = filteredBillboards.slice(0, maxCards);
+              const cardsPerPage = 6;
+              const totalPages = Math.ceil(displayedBillboards.length / cardsPerPage);
+              return displayedBillboards.length > 6 ? (
+                <>
+                  <button
+                    type="button"
+                    className="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none"
+                    onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
+                    disabled={currentPage === 0}
+                  >
+                    <span className="inline-flex items-center justify-center w-10 h-10 rounded-full group-focus:ring-4 group-focus:ring-white dark:group-focus:ring-gray-800/70 group-focus:outline-none">
+                      <svg className="w-4 h-4 text-white dark:text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 1 1 5l4 4" />
+                      </svg>
+                      <span className="sr-only">Previous</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none"
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))}
+                    disabled={currentPage === totalPages - 1}
+                  >
+                    <span className="inline-flex items-center justify-center w-10 h-10 rounded-full group-focus:ring-4 group-focus:ring-white dark:group-focus:ring-gray-800/70 group-focus:outline-none">
+                      <svg className="w-4 h-4 text-white dark:text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 9 4-4-4-4" />
+                      </svg>
+                      <span className="sr-only">Next</span>
+                    </span>
+                  </button>
+                </>
+              ) : null;
+            })()}
+          </>
+        )}
+      </div>
+
+      {filteredBillboards.length > 18 && (
+        <div className="text-center mt-6">
+          <Button onClick={() => setView('map')}>
+            View All on Map
+          </Button>
+        </div>
       )}
+
+      {filteredBillboards.length === 0 && (
+        <div className="text-center py-12">
+          <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No billboards found</h3>
+          <p className="text-muted-foreground">Try adjusting your search criteria</p>
+        </div>
+      )}
+
+      <BookingDialog
+        billboard={selectedBillboard}
+        open={showBookingDialog}
+        onClose={() => setShowBookingDialog(false)}
+        onSubmit={handleBookingSubmit}
+      />
+
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-sm p-0">
+          <Card className="overflow-hidden gap-0">
+            <div className="relative aspect-video">
+              <img
+                src={selectedBillboard?.image ? (selectedBillboard.image.startsWith('uploads') ? `http://localhost:8080/uploads/${selectedBillboard.image.replace(/^uploads[\/\\]/, '').replace(/\\/g, '/')}` : `data:image/png;base64,${selectedBillboard.image}`) : '/placeholder.png'}
+                alt={selectedBillboard?.name}
+                className="w-full h-full object-contain"
+              />
+              <Badge className="absolute top-2 right-2 bg-green-100 text-green-800">
+                Available
+              </Badge>
+            </div>
+
+            <CardHeader className="pt-0">
+              <CardTitle className="flex items-center justify-between font-bold">
+                {selectedBillboard?.name}
+              </CardTitle>
+              <CardDescription>{selectedBillboard?.location}</CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <p className="text-sm">{selectedBillboard?.description}</p>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Size: {selectedBillboard?.size}</span>
+                <span className="font-semibold">${selectedBillboard?.price.toLocaleString()}/month</span>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Address: {selectedBillboard?.address}
+              </div>
+
+              <button
+                className="w-full px-4 py-2 flex items-center justify-center rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-[#030213] text-primary-foreground hover:bg-[#31313b]"
+                onClick={() => {
+                  setShowDetailsDialog(false);
+                  setShowBookingDialog(true);
+                }}
+              >
+                Book Now
+              </button>
+            </CardContent>
+          </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-}
+};
 
 export default UserDashboard;

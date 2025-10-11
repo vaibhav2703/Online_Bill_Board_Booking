@@ -19,6 +19,10 @@ public class Billboard {
     private String address;
 
     @NotNull
+    @Pattern(regexp = "^\\+?\\d{10,15}$", message = "Phone number must be 10-15 digits, optionally starting with +")
+    private String phone;
+
+    @NotNull
     private Double lat;
 
     @NotNull
@@ -29,6 +33,9 @@ public class Billboard {
 
     @NotBlank
     private String status; // available, booked, maintenance
+
+    @Column(nullable = false)
+    private Boolean isAvailable = true; // Default to true
 
     @Positive
     private Double price;
@@ -51,6 +58,8 @@ public class Billboard {
     public void setLocation(String location) { this.location = location; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
     public double getLat() { return lat; }
     public void setLat(double lat) { this.lat = lat; }
     public double getLng() { return lng; }
@@ -59,6 +68,8 @@ public class Billboard {
     public void setSize(String size) { this.size = size; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public Boolean getIsAvailable() { return isAvailable; }
+    public void setIsAvailable(Boolean isAvailable) { this.isAvailable = isAvailable; }
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
     public String getDescription() { return description; }
