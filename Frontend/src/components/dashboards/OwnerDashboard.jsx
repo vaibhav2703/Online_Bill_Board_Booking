@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Plus, MapPin, DollarSign, Calendar, Edit, Trash2 } from 'lucide-react';
+import { Plus, MapPin, DollarSign, Calendar, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { BillboardForm } from '../forms/BillboardForm';
 import { ownerAPI } from '../../services/api';
@@ -126,10 +126,16 @@ export const OwnerDashboard = () => {
           <h1 className="text-2xl font-semibold">My Billboards</h1>
           <p className="text-muted-foreground">Manage your billboard properties and track bookings</p>
         </div>
-        <button onClick={() => navigate('/owner/registerBillboard')} className="px-4 py-2 flex items-center rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-[#030213] text-primary-foreground hover:bg-[#31313b]">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Billboard
-        </button>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={loadBillboards}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <button onClick={() => navigate('/owner/registerBillboard')} className="px-4 py-2 flex items-center rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-[#030213] text-primary-foreground hover:bg-[#31313b]">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Billboard
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

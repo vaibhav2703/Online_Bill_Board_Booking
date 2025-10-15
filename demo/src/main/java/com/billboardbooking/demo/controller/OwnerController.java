@@ -1,9 +1,11 @@
 package com.billboardbooking.demo.controller;
 
 import com.billboardbooking.demo.entity.Billboard;
+import com.billboardbooking.demo.entity.Booking;
 import com.billboardbooking.demo.entity.Owner;
 import com.billboardbooking.demo.entity.User;
 import com.billboardbooking.demo.repository.BillboardRepository;
+import com.billboardbooking.demo.repository.BookingRepository;
 import com.billboardbooking.demo.repository.OwnerRepository;
 import com.billboardbooking.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
 import java.util.Base64;
+import java.time.LocalDate;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +30,8 @@ public class OwnerController {
     private static final Logger logger = Logger.getLogger(String.valueOf(OwnerController.class));
     @Autowired
     private BillboardRepository billboardRepository;
+    @Autowired
+    private BookingRepository bookingRepository;
     @Autowired
     private OwnerRepository ownerRepository;
     @Autowired
@@ -109,7 +114,37 @@ public class OwnerController {
         if (owner == null) {
             return java.util.Collections.emptyList();
         }
-        return billboardRepository.findByOwnerId(owner.getId());
+        List<Billboard> billboards = billboardRepository.findByOwnerId(owner.getId());
+        logger.info("Checking status for " + billboards.size() + " billboards");
+        for (Billboard billboard : billboards) {
+            boolean hasBooking = bookingRepository.hasBookingForBillboard(billboard.getId());
+            logger.info("Billboard " + billboard.getId() + " - hasBooking: " + hasBooking);
+            if (hasBooking) {
+                billboard.setStatus("booked");
+                billboard.setIsAvailable(false);
+            } else {
+                billboard.setStatus("available");
+                billboard.setIsAvailable(true);
+            }
+        }
+        return billboards;
+    }
+
+    @GetMapping("/bookings")
+    public List<Booking> getOwnerBookings() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName().split("\\|")[0];
+        User.Role role = User.Role.OWNER;
+        Optional<User> userOpt = userRepository.findByUsernameAndRole(username, role);
+        if (!userOpt.isPresent()) {
+            return java.util.Collections.emptyList();
+        }
+        User user = userOpt.get();
+        Owner owner = ownerRepository.findByUserId(user.getId());
+        if (owner == null) {
+            return java.util.Collections.emptyList();
+        }
+        return bookingRepository.findByOwnerId(owner.getId());
     }
 
     @PutMapping(value = "/billboards/{id}", consumes = {"multipart/form-data"})

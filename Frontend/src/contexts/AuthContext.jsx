@@ -20,8 +20,20 @@ export const AuthProvider = ({ children }) => {
     const role = localStorage.getItem('role');
     const name = localStorage.getItem('name');
     if (token && role) {
+      // Optionally, validate token here if needed
       setUser({ token, role, name });
     }
+  }, []);
+
+  // Listen for storage changes to handle logout from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' && !e.newValue) {
+        setUser(null);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = async (usernameOrEmail, password, selectedRole) => {

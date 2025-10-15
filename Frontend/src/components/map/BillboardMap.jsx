@@ -26,8 +26,8 @@ function BillboardMap({ billboards, onBook }) {
                 <p>Size: {billboard.size}</p>
                 <p>Price: ${billboard.price}</p>
                 <p>Description: {billboard.description}</p>
-                <p>Status: {billboard.isAvailable ? 'Available' : 'Not Available'}</p>
-                {billboard.isAvailable && onBook && (
+                <p>Status: {billboard.status}</p>
+                {billboard.status === 'available' && onBook && (
                   <button onClick={() => onBook(billboard)}>Book Now</button>
                 )}
               </div>

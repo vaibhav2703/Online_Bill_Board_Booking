@@ -9,6 +9,7 @@ import UserDashboard from './components/dashboards/UserDashboard';
 import OwnerDashboard from './components/dashboards/OwnerDashboard';
 import BillboardRegistration from './components/auth/BillboardRegistration';
 import { Header } from './components/common/Header';
+import { Toaster } from 'react-hot-toast';
 import './App.css';
 
 function AppContent() {
@@ -59,6 +60,7 @@ function App() {
     <AuthProvider>
       <Router>
         <AppContent />
+        <Toaster />
       </Router>
     </AuthProvider>
   );

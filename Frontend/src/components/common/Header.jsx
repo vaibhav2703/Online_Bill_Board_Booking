@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '../ui/button';
 import { useAuth } from '../../contexts/AuthContext';
-import { LogOut, MapPin, User } from 'lucide-react';
+import { LogOut, MapPin, User, BookOpen } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 
 export const Header = ({ onProfileClick }) => {

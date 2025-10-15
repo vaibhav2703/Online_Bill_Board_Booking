@@ -4,21 +4,34 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
-import { MapPin, Search, Filter, Calendar, DollarSign } from 'lucide-react';
+import { MapPin, Search, Filter, Calendar, DollarSign, BookOpen } from 'lucide-react';
 import SimpleMapSearch from '../SimpleMapSearch';
 import BookingDialog from '../BookingDialog';
 import { ProfilePage } from '../profile/ProfilePage';
 import { ProfileSettings } from '../profile/ProfileSettings';
-import { billboardAPI } from '../../services/api';
+import { billboardAPI, bookingAPI } from '../../services/api';
+import toast from 'react-hot-toast';
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'available': return 'bg-green-100 text-green-800';
+    case 'booked': return 'bg-blue-100 text-blue-800';
+    case 'maintenance': return 'bg-yellow-100 text-yellow-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+};
 
 const UserDashboard = ({ showProfile, onCloseProfile }) => {
   const [view, setView] = useState('list');
+  const [userBookings, setUserBookings] = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
 
   useEffect(() => {
     if (showProfile) {
       setView('profile');
     }
   }, [showProfile]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBillboard, setSelectedBillboard] = useState(null);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
@@ -27,18 +40,38 @@ const UserDashboard = ({ showProfile, onCloseProfile }) => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
 
+  const fetchUserBookings = async () => {
+    setBookingsLoading(true);
+    try {
+      const response = await bookingAPI.getUserBookings();
+      setUserBookings(response.data);
+    } catch (error) {
+      console.error('Error fetching user bookings:', error);
+      toast.error('Failed to load bookings');
+    } finally {
+      setBookingsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchBillboards = async () => {
-      try {
-        const response = await billboardAPI.getAll();
-        const availableBillboards = response.data.filter(billboard => billboard.status === 'available');
-        setBillboards(availableBillboards);
-      } catch (error) {
-        console.error('Error fetching billboards:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (view === 'bookings') {
+      fetchUserBookings();
+    }
+  }, [view]);
+
+  const fetchBillboards = async () => {
+    try {
+      const response = await billboardAPI.getAll();
+      const availableBillboards = response.data.filter(billboard => billboard.status === 'available');
+      setBillboards(availableBillboards);
+    } catch (error) {
+      console.error('Error fetching billboards:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchBillboards();
   }, []);
 
@@ -53,11 +86,17 @@ const UserDashboard = ({ showProfile, onCloseProfile }) => {
     setShowBookingDialog(true);
   };
 
-  const handleBookingSubmit = (bookingData) => {
-    console.log('Booking submitted:', bookingData);
-    setShowBookingDialog(false);
-    setSelectedBillboard(null);
-    // In real app, submit to API
+  const handleBookingSubmit = async (bookingData) => {
+    try {
+      await bookingAPI.create(bookingData);
+      toast.success('Booking successful!');
+      setShowBookingDialog(false);
+      setSelectedBillboard(null);
+      fetchBillboards(); // Refetch to update the list
+    } catch (error) {
+      console.error('Booking failed:', error);
+      toast.error('Booking failed. Please try again.');
+    }
   };
 
   if (view === 'profile') {
@@ -93,6 +132,75 @@ const UserDashboard = ({ showProfile, onCloseProfile }) => {
           billboards={filteredBillboards}
           onSelectBillboard={handleBookBillboard}
         />
+      </div>
+    );
+  }
+
+  if (view === 'bookings') {
+    return (
+      <div className="p-4 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold">My Bookings</h1>
+            <p className="text-muted-foreground">View and manage your billboard bookings</p>
+          </div>
+          <Button variant="outline" onClick={() => setView('list')}>
+            Back to Billboards
+          </Button>
+        </div>
+
+        {bookingsLoading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading your bookings...</p>
+          </div>
+        ) : userBookings.length === 0 ? (
+          <div className="text-center py-12">
+            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No bookings found</h3>
+            <p className="text-muted-foreground mb-4">You haven't made any bookings yet</p>
+            <Button onClick={() => setView('list')}>
+              Browse Billboards
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {userBookings.map((booking) => (
+              <Card key={booking.id} className="overflow-hidden">
+                <div className="relative aspect-video">
+                  <img
+                    src={booking.billboard?.image ? (booking.billboard.image.startsWith('uploads') ? `http://localhost:8080/uploads/${booking.billboard.image.replace(/^uploads[\/\\]/, '').replace(/\\/g, '/')}` : `data:image/png;base64,${booking.billboard.image}`) : '/placeholder.png'}
+                    alt={booking.billboard?.name}
+                    className="w-full h-full object-contain"
+                  />
+                  <Badge className="absolute top-2 right-2 bg-blue-100 text-blue-800">
+                    Booked
+                  </Badge>
+                </div>
+
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between font-bold">
+                    {booking.billboard?.name}
+                  </CardTitle>
+                  <CardDescription>{booking.billboard?.location}</CardDescription>
+                </CardHeader>
+
+                <CardContent className="space-y-3">
+                  <div className="text-sm text-muted-foreground">
+                    <p><strong>Company:</strong> {booking.companyName}</p>
+                    <p><strong>Duration:</strong> {booking.duration} months</p>
+                    <p><strong>Start Date:</strong> {new Date(booking.startDate).toLocaleDateString()}</p>
+                    <p><strong>End Date:</strong> {new Date(booking.endDate).toLocaleDateString()}</p>
+                    <p><strong>Total Price:</strong> ${booking.totalPrice?.toLocaleString()}</p>
+                  </div>
+
+                  <div className="text-sm">
+                    <p className="line-clamp-2">{booking.campaignDetails}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -199,8 +307,8 @@ const UserDashboard = ({ showProfile, onCloseProfile }) => {
                           alt={billboard.name}
                           className="w-full h-full object-contain"
                         />
-                        <Badge className="absolute top-2 right-2 bg-green-100 text-green-800">
-                          Available
+                        <Badge className={`absolute top-2 right-2 ${getStatusColor(billboard.status)}`}>
+                          {billboard.status}
                         </Badge>
                       </div>
 
@@ -307,8 +415,8 @@ const UserDashboard = ({ showProfile, onCloseProfile }) => {
                 alt={selectedBillboard?.name}
                 className="w-full h-full object-contain"
               />
-              <Badge className="absolute top-2 right-2 bg-green-100 text-green-800">
-                Available
+              <Badge className={`absolute top-2 right-2 ${getStatusColor(selectedBillboard?.status)}`}>
+                {selectedBillboard?.status}
               </Badge>
             </div>
 
