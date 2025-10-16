@@ -11,6 +11,7 @@ import { ProfilePage } from '../profile/ProfilePage';
 import { ProfileSettings } from '../profile/ProfileSettings';
 import { billboardAPI, bookingAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -21,8 +22,9 @@ const getStatusColor = (status) => {
   }
 };
 
-const UserDashboard = ({ showProfile, onCloseProfile }) => {
-  const [view, setView] = useState('list');
+const UserDashboard = ({ showProfile, onCloseProfile, initialView = 'list' }) => {
+  const navigate = useNavigate();
+  const [view, setView] = useState(initialView);
   const [userBookings, setUserBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
 
@@ -144,8 +146,8 @@ const UserDashboard = ({ showProfile, onCloseProfile }) => {
             <h1 className="text-2xl font-semibold">My Bookings</h1>
             <p className="text-muted-foreground">View and manage your billboard bookings</p>
           </div>
-          <Button variant="outline" onClick={() => setView('list')}>
-            Back to Billboards
+          <Button variant="outline" onClick={() => navigate('/user/profile')}>
+            Back to Profile
           </Button>
         </div>
 
@@ -158,7 +160,7 @@ const UserDashboard = ({ showProfile, onCloseProfile }) => {
             <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No bookings found</h3>
             <p className="text-muted-foreground mb-4">You haven't made any bookings yet</p>
-            <Button onClick={() => setView('list')}>
+            <Button onClick={() => navigate('/user')}>
               Browse Billboards
             </Button>
           </div>

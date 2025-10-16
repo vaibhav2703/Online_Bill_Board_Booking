@@ -3,9 +3,11 @@ import { Button } from '../ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { LogOut, MapPin, User, BookOpen } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { useNavigate } from 'react-router-dom';
 
 export const Header = ({ onProfileClick }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -31,10 +33,16 @@ export const Header = ({ onProfileClick }) => {
           </div>
 
           {user.role === 'USER' && (
-            <Button onClick={onProfileClick} variant="outline">
-              <User className="h-4 w-4 mr-2" />
-              Profile
-            </Button>
+            <>
+              <Button onClick={() => navigate('/user/profile')} variant="outline">
+                <User className="h-4 w-4 mr-2" />
+                Profile
+              </Button>
+              {/* <Button onClick={() => navigate('/user/profile/bookings')} variant="outline">
+                <BookOpen className="h-4 w-4 mr-2" />
+                My Bookings
+              </Button> */}
+            </>
           )}
 
           <Button onClick={logout} className="border hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 flex items-center" style={{ backgroundColor: '#FFFFFF', color: '#0A0A0A', borderColor: '#6c757d' }}>

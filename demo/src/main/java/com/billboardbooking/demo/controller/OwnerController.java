@@ -17,7 +17,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
-import java.util.Base64;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 
 import java.util.List;
@@ -90,7 +93,11 @@ public class OwnerController {
 
         if (image != null && !image.isEmpty()) {
             try {
-                billboard.setImage(Base64.getEncoder().encodeToString(image.getBytes()));
+                String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+                Path filePath = Paths.get(uploadDir, fileName);
+                Files.createDirectories(filePath.getParent());
+                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                billboard.setImage(fileName);
             } catch (IOException e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Image upload failed");
             }
@@ -193,7 +200,11 @@ public class OwnerController {
 
         if (image != null && !image.isEmpty()) {
             try {
-                billboard.setImage(Base64.getEncoder().encodeToString(image.getBytes()));
+                String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+                Path filePath = Paths.get(uploadDir, fileName);
+                Files.createDirectories(filePath.getParent());
+                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                billboard.setImage(fileName);
             } catch (IOException e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Image upload failed");
             }

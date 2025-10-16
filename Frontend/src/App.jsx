@@ -16,6 +16,11 @@ function AppContent() {
   const { user, logout } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
 
+  // Reset showProfile when user logs in or out
+  React.useEffect(() => {
+    setShowProfile(false);
+  }, [user]);
+
   const handleProfileClick = () => {
     setShowProfile(true);
   };
@@ -42,6 +47,12 @@ function AppContent() {
           <Route path="/login/registration/owner" element={!user ? <OwnerRegistration /> : <Navigate to="/" />} />
           <Route path="/user" element={
             user && user.role === 'USER' ? <UserDashboard showProfile={showProfile} onCloseProfile={handleCloseProfile} /> : <Navigate to="/login" />
+          } />
+          <Route path="/user/profile" element={
+            user && user.role === 'USER' ? <UserDashboard showProfile={true} onCloseProfile={handleCloseProfile} initialView="profile" /> : <Navigate to="/login" />
+          } />
+          <Route path="/user/profile/bookings" element={
+            user && user.role === 'USER' ? <UserDashboard initialView="bookings" /> : <Navigate to="/login" />
           } />
           <Route path="/owner" element={
             user && user.role === 'OWNER' ? <OwnerDashboard /> : <Navigate to="/login" />

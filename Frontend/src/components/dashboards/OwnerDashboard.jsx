@@ -18,9 +18,15 @@ export const OwnerDashboard = () => {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '';
-    // Extract filename from the full path
-    const filename = imagePath.split('\\').pop().split('/').pop();
-    return `http://localhost:8080/uploads/${filename}`;
+    // Check if it's a filename (contains _ or .) or base64
+    if (imagePath.includes('_') || imagePath.includes('.')) {
+      // It's a filename
+      const filename = imagePath.split('\\').pop().split('/').pop();
+      return `http://localhost:8080/uploads/${filename}`;
+    } else {
+      // It's base64 data
+      return `data:image/png;base64,${imagePath}`;
+    }
   };
 
   useEffect(() => {

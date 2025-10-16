@@ -2,6 +2,7 @@ package com.billboardbooking.demo.entity;
 
 import jakarta.persistence.*;
 import javax.validation.constraints.*;
+import jakarta.persistence.Lob;
 
 @Entity
 public class Billboard {
@@ -43,6 +44,7 @@ public class Billboard {
     @Column(length = 1000)
     private String description;
 
+    @Lob
     private String image;
 
     @ManyToOne
