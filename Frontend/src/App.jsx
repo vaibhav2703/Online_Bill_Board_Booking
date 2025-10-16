@@ -9,6 +9,8 @@ import UserDashboard from './components/dashboards/UserDashboard';
 import OwnerDashboard from './components/dashboards/OwnerDashboard';
 import BillboardRegistration from './components/auth/BillboardRegistration';
 import { Header } from './components/common/Header';
+import { ProfilePage } from './components/profile/ProfilePage';
+import { ProfileSettings } from './components/profile/ProfileSettings';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -46,16 +48,25 @@ function AppContent() {
           <Route path="/login/registration/user" element={!user ? <UserRegistration /> : <Navigate to="/" />} />
           <Route path="/login/registration/owner" element={!user ? <OwnerRegistration /> : <Navigate to="/" />} />
           <Route path="/user" element={
-            user && user.role === 'USER' ? <UserDashboard showProfile={showProfile} onCloseProfile={handleCloseProfile} /> : <Navigate to="/login" />
+            user && user.role === 'USER' ? <UserDashboard /> : <Navigate to="/login" />
           } />
           <Route path="/user/profile" element={
-            user && user.role === 'USER' ? <UserDashboard showProfile={true} onCloseProfile={handleCloseProfile} initialView="profile" /> : <Navigate to="/login" />
+            user && user.role === 'USER' ? <ProfilePage /> : <Navigate to="/login" />
+          } />
+          <Route path="/user/profile/settings" element={
+            user && user.role === 'USER' ? <ProfileSettings /> : <Navigate to="/login" />
           } />
           <Route path="/user/profile/bookings" element={
             user && user.role === 'USER' ? <UserDashboard initialView="bookings" /> : <Navigate to="/login" />
           } />
           <Route path="/owner" element={
             user && user.role === 'OWNER' ? <OwnerDashboard /> : <Navigate to="/login" />
+          } />
+          <Route path="/owner/profile" element={
+            user && user.role === 'OWNER' ? <ProfilePage /> : <Navigate to="/login" />
+          } />
+          <Route path="/owner/profile/settings" element={
+            user && user.role === 'OWNER' ? <ProfileSettings /> : <Navigate to="/login" />
           } />
           <Route path="/owner/registerBillboard" element={
             user && user.role === 'OWNER' ? <BillboardRegistration /> : <Navigate to="/login" />
