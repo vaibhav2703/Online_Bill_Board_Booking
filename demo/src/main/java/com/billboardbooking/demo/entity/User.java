@@ -3,11 +3,16 @@ package com.billboardbooking.demo.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import javax.validation.constraints.*;
+import jakarta.persistence.Index;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"username", "role"}),
     @UniqueConstraint(columnNames = {"email", "role"})
+}, indexes = {
+    @Index(name = "idx_username_role", columnList = "username, role"),
+    @Index(name = "idx_email_role", columnList = "email, role"),
+    @Index(name = "idx_reset_token", columnList = "resetToken")
 })
 public class User {
     @Id

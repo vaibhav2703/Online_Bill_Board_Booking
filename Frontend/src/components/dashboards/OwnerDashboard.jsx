@@ -2,16 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Plus, MapPin, DollarSign, Calendar, Edit, Trash2 } from 'lucide-react';
+import { Plus, MapPin, DollarSign, Calendar, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { BillboardForm } from '../forms/BillboardForm';
 import { ownerAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 export const OwnerDashboard = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [billboards, setBillboards] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingBillboard, setEditingBillboard] = useState(null);
+  const [error, setError] = useState('');
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    // Check if it's a filename (contains _ or .) or base64
+    if (imagePath.includes('_') || imagePath.includes('.')) {
+      // It's a filename
+      const filename = imagePath.split('\\').pop().split('/').pop();
+      return `http://localhost:8080/uploads/${filename}`;
+    } else {
+      // It's base64 data
+      return `data:image/png;base64,${imagePath}`;
+    }
+  };
 
   useEffect(() => {
     loadBillboards();
@@ -21,8 +37,16 @@ export const OwnerDashboard = () => {
     try {
       const response = await ownerAPI.getBillboards();
       setBillboards(response.data);
+      setError('');
     } catch (err) {
       console.error('Failed to load billboards:', err);
+      if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+        logout();
+        navigate('/login');
+      } else {
+        setError('Failed to load billboards.');
+      }
     }
   };
 
@@ -33,6 +57,13 @@ export const OwnerDashboard = () => {
       loadBillboards();
     } catch (err) {
       console.error('Failed to add billboard:', err);
+      if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+        logout();
+        navigate('/login');
+      } else {
+        setError('Failed to add billboard.');
+      }
     }
   };
 
@@ -45,6 +76,13 @@ export const OwnerDashboard = () => {
         loadBillboards();
       } catch (err) {
         console.error('Failed to update billboard:', err);
+        if (err.response?.status === 401) {
+          setError('Authentication failed. Please log in again.');
+          logout();
+          navigate('/login');
+        } else {
+          setError('Failed to update billboard.');
+        }
       }
     }
   };
@@ -55,6 +93,13 @@ export const OwnerDashboard = () => {
       loadBillboards();
     } catch (err) {
       console.error('Failed to delete billboard:', err);
+      if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+        logout();
+        navigate('/login');
+      } else {
+        setError('Failed to delete billboard.');
+      }
     }
   };
 
@@ -87,10 +132,16 @@ export const OwnerDashboard = () => {
           <h1 className="text-2xl font-semibold">My Billboards</h1>
           <p className="text-muted-foreground">Manage your billboard properties and track bookings</p>
         </div>
-        <button onClick={() => navigate('/owner/registerBillboard')} className="px-4 py-2 flex items-center rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-[#030213] text-primary-foreground hover:bg-[#31313b]">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Billboard
-        </button>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={loadBillboards}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <button onClick={() => navigate('/owner/registerBillboard')} className="px-4 py-2 flex items-center rounded-md disabled:opacity-50 disabled:cursor-not-allowed bg-[#030213] text-primary-foreground hover:bg-[#31313b]">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Billboard
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -133,21 +184,21 @@ export const OwnerDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {billboards.map((billboard) => (
-          <Card key={billboard.id} className="overflow-hidden">
-            <div className="aspect-video relative">
+          <Card key={billboard.id} className="overflow-hidden w-72 flex flex-col auto-cols-max">
+            <div className="relative aspect-video">
               <img
-                src={billboard.image}
-                alt={billboard.title}
-                className="w-full h-full object-cover"
+                src={getImageUrl(billboard.image)}
+                alt={billboard.name}
+                className="w-full h-full object-contain"
               />
               <Badge className={`absolute top-2 right-2 ${getStatusColor(billboard.status)}`}>
                 {billboard.status}
               </Badge>
             </div>
-            
+
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                {billboard.title}
+              <CardTitle className="mt-[-40px] flex items-center justify-between">
+                {billboard.name}
                 <div className="flex space-x-1">
                   <Button 
                     variant="outline" 
@@ -171,12 +222,12 @@ export const OwnerDashboard = () => {
               <CardDescription>{billboard.location}</CardDescription>
             </CardHeader>
             
-            <CardContent>
-              <div className="space-y-2">
-                <p className="flex items-center text-sm text-muted-foreground">
+            <CardContent className={"mt-[-35px] p-6"}>
+              <div className="space-y-1">
+                {/* <p className="flex items-center text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4 mr-1" />
                   {billboard.address}
-                </p>
+                </p> */}
                 <p className="text-sm">{billboard.description}</p>
                 <div className="flex justify-between items-center mt-4">
                   <span className="font-semibold">${billboard.price}/month</span>

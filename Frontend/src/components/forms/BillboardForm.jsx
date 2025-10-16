@@ -9,9 +9,10 @@ import { SimpleLocationPicker } from '../map/SimpleLocationPicker';
 
 export const BillboardForm = ({ billboard, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
-    title: billboard?.title || '',
+    name: billboard?.name || '',
     location: billboard?.location || '',
     address: billboard?.address || '',
+    phone: billboard?.phone || '',
     lat: billboard?.lat || 18.501489,
     lng: billboard?.lng || 73.858904,
     size: billboard?.size || '',
@@ -23,12 +24,20 @@ export const BillboardForm = ({ billboard, onSubmit, onCancel }) => {
 
   const [errors, setErrors] = useState({});
 
-  const validateForm = () => {
+    const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.title.trim()) newErrors.title = 'Title is required';
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.location.trim()) newErrors.location = 'Location is required';
     if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else {
+      const phoneRegex = /^\+?\d{10,15}$/;
+      if (!phoneRegex.test(formData.phone)) {
+        newErrors.phone = 'Phone number must be 10-15 digits, optionally starting with +';
+      }
+    }
     if (!formData.size.trim()) newErrors.size = 'Size is required';
     if (formData.price <= 0) newErrors.price = 'Price must be greater than 0';
     if (!formData.description.trim()) newErrors.description = 'Description is required';
@@ -42,13 +51,7 @@ export const BillboardForm = ({ billboard, onSubmit, onCancel }) => {
     e.preventDefault();
 
     if (validateForm()) {
-      // Map form fields to backend expected fields
-      const dataToSubmit = {
-        ...formData,
-        name: formData.title, // Backend expects 'name'
-      };
-      delete dataToSubmit.title; // Remove 'title' as it's not in backend
-      onSubmit(dataToSubmit);
+      onSubmit(formData);
     }
   };
 
@@ -107,14 +110,14 @@ export const BillboardForm = ({ billboard, onSubmit, onCancel }) => {
           <form onSubmit={handleSubmit} className="ml-[2px] space-y-8 max-w-full w-[800px]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="title" className="text-sm font-medium text-gray-700">Billboard Title *</Label>
+                <Label htmlFor="name" className="text-sm font-medium text-gray-700">Billboard Name *</Label>
                 <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
                   placeholder="e.g., Highway Junction Billboard" className="text-[14px] bg-[#f2f2f2]"
                 />
-                {errors.title && <p className="text-destructive text-sm">{errors.title}</p>}
+                {errors.name && <p className="text-destructive text-sm">{errors.name}</p>}
               </div>
 
               <div className="flex flex-col space-y-1">
@@ -142,6 +145,18 @@ export const BillboardForm = ({ billboard, onSubmit, onCancel }) => {
                   Address will be auto-filled when you select a location on the map below
                 </p>
                 {errors.address && <p className="text-destructive text-xs mt-1">{errors.address}</p>}
+              </div>
+
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="e.g., +1 123-456-7890"
+                  className=" bg-[#f2f2f2] border border-gray-300 rounded-md py-2 px-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone}</p>}
               </div>
 
               <div className="flex flex-col space-y-1">

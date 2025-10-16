@@ -18,9 +18,22 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
+    const name = localStorage.getItem('name');
     if (token && role) {
-      setUser({ token, role });
+      // Optionally, validate token here if needed
+      setUser({ token, role, name });
     }
+  }, []);
+
+  // Listen for storage changes to handle logout from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' && !e.newValue) {
+        setUser(null);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = async (usernameOrEmail, password, selectedRole) => {
@@ -41,7 +54,8 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem('token', token);
       localStorage.setItem('role', userRole);
-      setUser({ token, role: userRole });
+      localStorage.setItem('name', usernameOrEmail);
+      setUser({ token, role: userRole, name: usernameOrEmail });
       setIsLoading(false);
       return { success: true };
     } catch (error) {
@@ -64,7 +78,8 @@ export const AuthProvider = ({ children }) => {
       const userRole = response.data.role === 'USER' ? 'USER' : 'OWNER';
       localStorage.setItem('token', token);
       localStorage.setItem('role', userRole);
-      setUser({ token, role: userRole });
+      localStorage.setItem('name', name);
+      setUser({ token, role: userRole, name });
       setIsLoading(false);
       return true;
     } catch (error) {
@@ -76,6 +91,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('name');
     setUser(null);
   };
 
