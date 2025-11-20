@@ -19,7 +19,20 @@ const BookingDialog = ({ billboard, open, onClose, onSubmit }) => {
 
   if (!open) return null;
 
-  const imageUrl = billboard?.image ? (billboard.image.startsWith('uploads') ? `http://localhost:8080/uploads/${billboard.image.replace(/^uploads[\/\\]/, '').replace(/\\/g, '/')}` : `data:image/png;base64,${billboard.image}`) : '/placeholder.png';
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '/placeholder.png';
+    // Check if it's a filename (contains _ or .) or base64
+    if (imagePath.includes('_') || imagePath.includes('.')) {
+      // It's a filename
+      const filename = imagePath.split('\\').pop().split('/').pop();
+      return `http://localhost:8080/uploads/${filename}`;
+    } else {
+      // It's base64
+      return `data:image/png;base64,${imagePath}`;
+    }
+  };
+
+  const imageUrl = getImageUrl(billboard?.image);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

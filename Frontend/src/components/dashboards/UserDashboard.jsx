@@ -22,6 +22,19 @@ const getStatusColor = (status) => {
   }
 };
 
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return '/placeholder.png';
+  // Check if it's a filename (contains _ or .) or base64
+  if (imagePath.includes('_') || imagePath.includes('.')) {
+    // It's a filename
+    const filename = imagePath.split('\\').pop().split('/').pop();
+    return `http://localhost:8080/uploads/${filename}`;
+  } else {
+    // It's base64
+    return `data:image/png;base64,${imagePath}`;
+  }
+};
+
 const UserDashboard = ({ showProfile, onCloseProfile, initialView = 'list' }) => {
   const navigate = useNavigate();
   const [view, setView] = useState(initialView);
@@ -170,7 +183,7 @@ const UserDashboard = ({ showProfile, onCloseProfile, initialView = 'list' }) =>
               <Card key={booking.id} className="overflow-hidden">
                 <div className="relative aspect-video">
                   <img
-                    src={booking.billboard?.image ? (booking.billboard.image.startsWith('uploads') ? `http://localhost:8080/uploads/${booking.billboard.image.replace(/^uploads[\/\\]/, '').replace(/\\/g, '/')}` : `data:image/png;base64,${booking.billboard.image}`) : '/placeholder.png'}
+                    src={getImageUrl(booking.billboard?.image)}
                     alt={booking.billboard?.name}
                     className="w-full h-full object-contain"
                   />
@@ -293,7 +306,7 @@ const UserDashboard = ({ showProfile, onCloseProfile, initialView = 'list' }) =>
                 const totalPages = Math.ceil(displayedBillboards.length / cardsPerPage);
                 const currentCards = displayedBillboards.length <= 6 ? displayedBillboards : displayedBillboards.slice(currentPage * cardsPerPage, (currentPage + 1) * cardsPerPage);
                 return currentCards.map((billboard) => {
-                  const imageUrl = billboard.image ? (billboard.image.startsWith('uploads') ? `http://localhost:8080/uploads/${billboard.image.replace(/^uploads[\/\\]/, '').replace(/\\/g, '/')}` : `data:image/png;base64,${billboard.image}`) : '/placeholder.png';
+                  const imageUrl = getImageUrl(billboard.image);
                   return (
                     <Card
                       key={billboard.id}
@@ -413,7 +426,7 @@ const UserDashboard = ({ showProfile, onCloseProfile, initialView = 'list' }) =>
           <Card className="overflow-hidden gap-0">
             <div className="relative aspect-video">
               <img
-                src={selectedBillboard?.image ? (selectedBillboard.image.startsWith('uploads') ? `http://localhost:8080/uploads/${selectedBillboard.image.replace(/^uploads[\/\\]/, '').replace(/\\/g, '/')}` : `data:image/png;base64,${selectedBillboard.image}`) : '/placeholder.png'}
+                src={getImageUrl(selectedBillboard?.image)}
                 alt={selectedBillboard?.name}
                 className="w-full h-full object-contain"
               />
