@@ -76,9 +76,25 @@ export const BillboardForm = ({ billboard, onSubmit, onCancel }) => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setFormData(prev => ({ ...prev, image: file }));
-    if (errors.image) {
-      setErrors(prev => ({ ...prev, image: '' }));
+    if (file) {
+      // Validate file size (max 1MB)
+      if (file.size > 1024 * 1024) {
+        setErrors(prev => ({ ...prev, image: 'Image size must be less than 1MB' }));
+        return;
+      }
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result.split(',')[1]; // Remove data:image/...;base64, prefix
+        setFormData(prev => ({ ...prev, image: base64String }));
+        if (errors.image) {
+          setErrors(prev => ({ ...prev, image: '' }));
+        }
+      };
+      reader.onerror = () => {
+        setErrors(prev => ({ ...prev, image: 'Failed to read image file' }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 

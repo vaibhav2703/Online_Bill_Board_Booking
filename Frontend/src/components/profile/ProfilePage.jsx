@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { bookingAPI, ownerAPI } from '../../services/api';
+import { calculateRemainingDays, formatRemainingDays } from '../utils/utils';
 import toast from 'react-hot-toast';
 
 export const ProfilePage = () => {
@@ -153,6 +154,7 @@ export const ProfilePage = () => {
     status: booking.status || 'active',
     date: booking.startDate,
     amount: booking.totalPrice || 0,
+    endDate: booking.endDate,
   }));
   const allCustomerActivity = userBookings.map((booking) => ({
     id: booking.id,
@@ -161,6 +163,7 @@ export const ProfilePage = () => {
     status: booking.status || 'active',
     date: booking.startDate,
     amount: booking.totalPrice || 0,
+    endDate: booking.endDate,
   }));
   const activeBillboards = customerActivity.map((activity) => activity.status === 'active').length;
   // Generate owner activity from real billboards data
@@ -427,6 +430,7 @@ export const ProfilePage = () => {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold">${activity.amount.toLocaleString()}/mo</p>
+                          <p className="text-sm text-muted-foreground">{formatRemainingDays(calculateRemainingDays(activity.endDate))}</p>
                           <Badge className={getStatusColor(activity.status)} variant="secondary">
                             {activity.status}
                           </Badge>
