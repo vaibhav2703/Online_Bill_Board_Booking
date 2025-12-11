@@ -1,0 +1,54 @@
+# Linguist language overrides
+
+# Exclude generated files and dependencies from language statistics
+node_modules/** linguist-vendored
+Frontend/node_modules/** linguist-vendored
+Frontend_2.0/node_modules/** linguist-vendored
+demo/target/** linguist-generated
+demo/.mvn/** linguist-vendored
+*.lock linguist-generated
+package-lock.json linguist-generated
+
+# Mark documentation files
+*.md linguist-documentation
+
+# Ensure proper language detection for Java
+*.java linguist-language=Java
+
+# Ensure proper language detection for JavaScript/JSX
+*.js linguist-language=JavaScript
+*.jsx linguist-language=JavaScript
+
+# CSS files
+*.css linguist-language=CSS
+
+# HTML files
+*.html linguist-language=HTML
+
+# Configuration files (optional - exclude from stats)
+*.json linguist-language=JSON
+*.xml linguist-language=XML
+*.config.js linguist-language=JavaScript
+
+# Line ending configuration
+* text=auto
+*.java text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+
+# Windows-specific files
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
