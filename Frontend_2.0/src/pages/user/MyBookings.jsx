@@ -1,0 +1,338 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Calendar, MapPin, User, Building2, FileText, IndianRupee, Clock, Search, Filter } from 'lucide-react';
+import bookingService from '../../services/bookingService';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import EmptyState from '../../components/ui/EmptyState';
+import toast from 'react-hot-toast';
+import { getImageUrl, getPlaceholderImage } from '../../utils/imageUtils';
+
+const MyBookings = () => {
+    const [bookings, setBookings] = useState([]);
+    const [filteredBookings, setFilteredBookings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('active');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchRef = useRef(null);
+
+    useEffect(() => {
+        fetchBookings();
+    }, []);
+
+    useEffect(() => {
+        filterBookings();
+    }, [searchTerm, statusFilter, bookings]);
+
+    // Handle click outside to close suggestions
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const fetchBookings = async () => {
+        try {
+            const data = await bookingService.getUserBookings();
+            setBookings(data);
+        } catch (error) {
+            toast.error('Failed to load bookings');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getSuggestions = () => {
+        if (!searchTerm.trim()) return [];
+
+        // Get unique billboard names that match the search term
+        const uniqueNames = [...new Set(
+            bookings
+                .filter(booking =>
+                    booking.billboard?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map(booking => booking.billboard?.name)
+                .filter(Boolean)
+        )];
+
+        return uniqueNames.slice(0, 5); // Limit to 5 suggestions
+    };
+
+    const filterBookings = () => {
+        let filtered = [...bookings];
+
+        // Search filter
+        if (searchTerm) {
+            filtered = filtered.filter(booking =>
+                booking.billboard?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                booking.billboard?.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                booking.companyName?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // Status filter
+        if (statusFilter !== 'all') {
+            const today = new Date();
+            filtered = filtered.filter(booking => {
+                const startDate = new Date(booking.startDate);
+                const endDate = new Date(booking.endDate);
+
+                if (statusFilter === 'active') {
+                    return startDate <= today && endDate >= today;
+                } else if (statusFilter === 'upcoming') {
+                    return startDate > today;
+                } else if (statusFilter === 'completed') {
+                    return endDate < today;
+                }
+                return true;
+            });
+        }
+
+        setFilteredBookings(filtered);
+    };
+
+    const getBookingStatus = (startDate, endDate) => {
+        const today = new Date();
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (start <= today && end >= today) {
+            return { label: 'Active', color: 'bg-green-100 text-green-800' };
+        } else if (start > today) {
+            return { label: 'Upcoming', color: 'bg-blue-100 text-blue-800' };
+        } else {
+            return { label: 'Completed', color: 'bg-gray-100 text-gray-800' };
+        }
+    };
+
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    };
+
+    if (loading) return <LoadingSpinner className="min-h-screen" />;
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
+                    <p className="text-gray-600 mt-1">View and manage your billboard bookings</p>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-primary-500">
+                        <h3 className="text-gray-600 text-sm font-medium">Total Bookings</h3>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">{bookings.length}</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+                        <h3 className="text-gray-600 text-sm font-medium">Active</h3>
+                        <p className="text-3xl font-bold text-green-600 mt-2">
+                            {bookings.filter(b => {
+                                const today = new Date();
+                                return new Date(b.startDate) <= today && new Date(b.endDate) >= today;
+                            }).length}
+                        </p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+                        <h3 className="text-gray-600 text-sm font-medium">Upcoming</h3>
+                        <p className="text-3xl font-bold text-blue-600 mt-2">
+                            {bookings.filter(b => new Date(b.startDate) > new Date()).length}
+                        </p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-gray-500">
+                        <h3 className="text-gray-600 text-sm font-medium">Total Spent</h3>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">
+                            ₹{bookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0).toLocaleString()}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Filters */}
+                <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Search with Autocomplete */}
+                        <div className="relative" ref={searchRef}>
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                            <input
+                                type="text"
+                                placeholder="Search by billboard, location, or company..."
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setShowSuggestions(true);
+                                }}
+                                onFocus={() => setShowSuggestions(true)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            />
+
+                            {/* Suggestions Dropdown */}
+                            {showSuggestions && searchTerm && getSuggestions().length > 0 && (
+                                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                    {getSuggestions().map((suggestion, index) => (
+                                        <div
+                                            key={index}
+                                            onClick={() => {
+                                                setSearchTerm(suggestion);
+                                                setShowSuggestions(false);
+                                            }}
+                                            className="px-4 py-3 hover:bg-primary-50 cursor-pointer transition-colors duration-150 flex items-center space-x-2 border-b border-gray-100 last:border-b-0"
+                                        >
+                                            <Search className="h-4 w-4 text-gray-400" />
+                                            <span className="text-sm text-gray-700">{suggestion}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Status Filter */}
+                        <div className="relative">
+                            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white"
+                            >
+                                <option value="all">All Bookings</option>
+                                <option value="active">Active</option>
+                                <option value="upcoming">Upcoming</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bookings List */}
+                {filteredBookings.length === 0 ? (
+                    <EmptyState
+                        title={searchTerm || statusFilter !== 'all' ? 'No bookings found' : 'No bookings yet'}
+                        description={searchTerm || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Start booking billboards to see them here'}
+                    />
+                ) : (
+                    <div className="space-y-6">
+                        {filteredBookings.map((booking) => {
+                            const status = getBookingStatus(booking.startDate, booking.endDate);
+                            return (
+                                <div
+                                    key={booking.id}
+                                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                                >
+                                    <div className="md:flex">
+                                        {/* Billboard Image */}
+                                        <div className="md:w-1/3 lg:w-1/4">
+                                            <div className="relative h-64 md:h-full">
+                                                <img
+                                                    src={booking.billboard?.image ? getImageUrl(booking.billboard.image) : getPlaceholderImage()}
+                                                    alt={booking.billboard?.name || 'Billboard'}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = getPlaceholderImage();
+                                                    }}
+                                                />
+                                                <div className="absolute top-4 right-4">
+                                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${status.color}`}>
+                                                        {status.label}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Booking Details */}
+                                        <div className="md:w-2/3 lg:w-3/4 p-6">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                                                        {booking.billboard?.name || 'N/A'}
+                                                    </h3>
+                                                    <div className="flex items-center text-gray-600">
+                                                        <MapPin className="h-4 w-4 mr-1" />
+                                                        <span className="text-sm">{booking.billboard?.location || 'N/A'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="flex items-center justify-end text-2xl font-bold text-primary-600">
+                                                        <IndianRupee className="h-6 w-6" />
+                                                        <span>{booking.totalPrice?.toLocaleString() || 0}</span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 mt-1">{booking.duration} month(s)</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                {/* Company Info */}
+                                                <div className="space-y-3">
+                                                    <div className="flex items-start space-x-3">
+                                                        <Building2 className="h-5 w-5 text-gray-400 mt-0.5" />
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 uppercase tracking-wide">Company</p>
+                                                            <p className="text-sm font-semibold text-gray-900">{booking.companyName || 'N/A'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-start space-x-3">
+                                                        <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 uppercase tracking-wide">Contact Person</p>
+                                                            <p className="text-sm font-semibold text-gray-900">{booking.userName || 'N/A'}</p>
+                                                            <p className="text-xs text-gray-600">{booking.userEmail || 'N/A'}</p>
+                                                            <p className="text-xs text-gray-600">{booking.userContact || 'N/A'}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Booking Dates */}
+                                                <div className="space-y-3">
+                                                    <div className="flex items-start space-x-3">
+                                                        <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 uppercase tracking-wide">Booking Period</p>
+                                                            <p className="text-sm font-semibold text-gray-900">
+                                                                {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-start space-x-3">
+                                                        <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 uppercase tracking-wide">Duration</p>
+                                                            <p className="text-sm font-semibold text-gray-900">{booking.duration} month(s)</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Campaign Details */}
+                                            {booking.campaignDetails && (
+                                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                                    <div className="flex items-start space-x-3">
+                                                        <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
+                                                        <div className="flex-1">
+                                                            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Campaign Details</p>
+                                                            <p className="text-sm text-gray-700 leading-relaxed">{booking.campaignDetails}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default MyBookings;

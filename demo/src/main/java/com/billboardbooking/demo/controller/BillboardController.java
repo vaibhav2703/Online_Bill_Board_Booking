@@ -2,8 +2,12 @@ package com.billboardbooking.demo.controller;
 
 import com.billboardbooking.demo.entity.Billboard;
 import com.billboardbooking.demo.entity.Booking;
+import com.billboardbooking.demo.entity.Owner;
+import com.billboardbooking.demo.entity.User;
 import com.billboardbooking.demo.repository.BillboardRepository;
 import com.billboardbooking.demo.repository.BookingRepository;
+import com.billboardbooking.demo.repository.OwnerRepository;
+import com.billboardbooking.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -15,6 +19,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.logging.Logger;
 
 @RestController
@@ -27,6 +33,10 @@ public class BillboardController {
     private BillboardRepository billboardRepository;
     @Autowired
     private BookingRepository bookingRepository;
+    @Autowired
+    private OwnerRepository ownerRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping
     public List<Billboard> getAllBillboards() {
@@ -35,11 +45,12 @@ public class BillboardController {
     }
 
     @GetMapping("/search")
-    public List<Billboard> searchBillboards(@RequestParam double lat, @RequestParam double lng, @RequestParam double radius) {
+    public List<Billboard> searchBillboards(@RequestParam double lat, @RequestParam double lng,
+            @RequestParam double radius) {
         double latRange = radius / 111.0; // Approximate km to degrees
         double lngRange = radius / (111.0 * Math.cos(Math.toRadians(lat)));
         return billboardRepository.findByLatBetweenAndLngBetweenAndStatus(
-            lat - latRange, lat + latRange, lng - lngRange, lng + lngRange, "available");
+                lat - latRange, lat + latRange, lng - lngRange, lng + lngRange, "available");
     }
 
     @GetMapping("/{id}")
@@ -48,13 +59,81 @@ public class BillboardController {
         return billboard.orElse(null);
     }
 
-    @PostMapping
-    public ResponseEntity<?> createBillboard(@Valid @RequestBody Billboard newBillboard) {
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<?> createBillboard(
+            @RequestParam("name") String name,
+            @RequestParam("location") String location,
+            @RequestParam("size") String size,
+            @RequestParam("price") Double price,
+            @RequestParam("description") String description,
+            @RequestParam("latitude") Double latitude,
+            @RequestParam("longitude") Double longitude,
+            @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
         try {
+            // Get authenticated user from JWT token
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+            }
+
+            String username = auth.getName().split("\\|")[0];
+            User.Role role = User.Role.OWNER;
+            Optional<User> userOpt = userRepository.findByUsernameAndRole(username, role);
+
+            if (!userOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Owner user not found");
+            }
+
+            User user = userOpt.get();
+            Owner owner = ownerRepository.findByUserId(user.getId());
+
+            if (owner == null) {
+                // Create owner if doesn't exist
+                owner = new Owner();
+                owner.setUser(user);
+                owner.setName(user.getName());
+                owner.setEmail(user.getEmail());
+                owner.setPhone(user.getPhone());
+                owner.setCompanyName(""); // Default empty
+                owner = ownerRepository.save(owner);
+            }
+
+            Billboard newBillboard = new Billboard();
+            newBillboard.setName(name);
+            newBillboard.setLocation(location);
+            newBillboard.setAddress(location); // Using location as address for now
+            newBillboard.setPhone(owner.getPhone()); // Using owner's phone
+            newBillboard.setSize(size);
+            newBillboard.setPrice(price);
+            newBillboard.setDescription(description);
+            newBillboard.setLat(latitude);
+            newBillboard.setLng(longitude);
+            newBillboard.setStatus("available");
+            newBillboard.setIsAvailable(true);
+            newBillboard.setOwner(owner); // Set the owner
+
+            // Handle image upload
+            if (image != null && !image.isEmpty()) {
+                String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+                String uploadDir = "uploads/";
+                java.nio.file.Path uploadPath = java.nio.file.Paths.get(uploadDir);
+
+                if (!java.nio.file.Files.exists(uploadPath)) {
+                    java.nio.file.Files.createDirectories(uploadPath);
+                }
+
+                java.nio.file.Path filePath = uploadPath.resolve(fileName);
+                java.nio.file.Files.copy(image.getInputStream(), filePath,
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                newBillboard.setImage("/uploads/" + fileName);
+            }
+
             Billboard savedBillboard = billboardRepository.save(newBillboard);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedBillboard);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while creating the billboard.");
+            logger.severe("Error creating billboard: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while creating the billboard: " + e.getMessage());
         }
     }
 
@@ -92,7 +171,8 @@ public class BillboardController {
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while updating the billboard.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while updating the billboard.");
         }
 
     }
@@ -109,7 +189,7 @@ public class BillboardController {
     private void updateExpiredBookings() {
         LocalDate currentDate = LocalDate.now();
         List<Booking> expiredBookings = bookingRepository.findExpiredBookings(currentDate);
-        
+
         for (Booking booking : expiredBookings) {
             Billboard billboard = booking.getBillboard();
             if ("booked".equals(billboard.getStatus())) {

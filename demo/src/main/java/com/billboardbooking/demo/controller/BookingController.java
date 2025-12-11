@@ -79,7 +79,8 @@ public class BookingController {
         booking.setDuration(request.getDuration());
         booking.setTotalPrice(totalPrice);
         Booking saved = bookingRepository.save(booking);
-        logger.info("Booking saved with ID: " + saved.getId() + " for billboard " + billboardOpt.get().getId() + " from " + saved.getStartDate() + " to " + saved.getEndDate());
+        logger.info("Booking saved with ID: " + saved.getId() + " for billboard " + billboardOpt.get().getId()
+                + " from " + saved.getStartDate() + " to " + saved.getEndDate());
         // Update billboard status to booked
         Billboard billboard = billboardOpt.get();
         billboard.setStatus("booked");
@@ -121,4 +122,4 @@ public class BookingController {
         }
         return bookingRepository.findByUserId(userOpt.get().getId());
     }
-} 
+}

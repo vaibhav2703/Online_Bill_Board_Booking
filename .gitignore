@@ -23,4 +23,7 @@ Postman_Collection_Online_Billboard_Booking.json
 TODO.md
 
 # Upload folder
-/uploads/*
+demo/uploads
+
+# Backend Architecture doc
+backend_architecture.md
