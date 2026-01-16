@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface BookingRepository extends JpaRepository<Booking, Long> {
-    List<Booking> findByUserId(Long userId);
+public interface BookingRepository extends JpaRepository<Booking, String> {
+    List<Booking> findByUserId(String userId);
 
     @Query("SELECT b FROM Booking b WHERE b.billboard.owner.id = :ownerId")
-    List<Booking> findByOwnerId(@Param("ownerId") Long ownerId);
+    List<Booking> findByOwnerId(@Param("ownerId") String ownerId);
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.billboard.id = :billboardId AND :currentDate BETWEEN b.startDate AND b.endDate")
-    boolean hasActiveBookingForBillboard(@Param("billboardId") Long billboardId,
+    boolean hasActiveBookingForBillboard(@Param("billboardId") String billboardId,
             @Param("currentDate") LocalDate currentDate);
 
     @Query("SELECT b FROM Booking b WHERE b.endDate < :currentDate")

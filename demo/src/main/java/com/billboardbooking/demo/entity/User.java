@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import javax.validation.constraints.*;
 import jakarta.persistence.Index;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -16,8 +17,10 @@ import jakarta.persistence.Index;
 })
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(generator = "user-id-generator")
+    @GenericGenerator(name = "user-id-generator", type = com.billboardbooking.demo.generator.UserIdGenerator.class)
+    @Column(name = "USER_ID", length = 12)
+    private String id;
 
     @NotBlank
     private String username;
@@ -51,11 +54,11 @@ public class User {
     }
 
     // Getters and setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

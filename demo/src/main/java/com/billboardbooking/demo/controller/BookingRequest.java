@@ -4,7 +4,7 @@ import javax.validation.constraints.*;
 
 public class BookingRequest {
     @NotNull
-    private Long billboardId;
+    private String billboardId;
 
     @NotBlank
     private String startDate;
@@ -31,27 +31,67 @@ public class BookingRequest {
     private String campaignDetails;
 
     // getters and setters
-    public Long getBillboardId() { return billboardId; }
-    public void setBillboardId(Long billboardId) { this.billboardId = billboardId; }
+    public String getBillboardId() {
+        return billboardId;
+    }
 
-    public String getStartDate() { return startDate; }
-    public void setStartDate(String startDate) { this.startDate = startDate; }
+    public void setBillboardId(String billboardId) {
+        this.billboardId = billboardId;
+    }
 
-    public int getDuration() { return duration; }
-    public void setDuration(int duration) { this.duration = duration; }
+    public String getStartDate() {
+        return startDate;
+    }
 
-    public String getCompanyName() { return companyName; }
-    public void setCompanyName(String companyName) { this.companyName = companyName; }
+    public void setStartDate(String startDate) {
+        this.startDate = startDate;
+    }
 
-    public String getContactPerson() { return contactPerson; }
-    public void setContactPerson(String contactPerson) { this.contactPerson = contactPerson; }
+    public int getDuration() {
+        return duration;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public String getCompanyName() {
+        return companyName;
+    }
 
-    public String getCampaignDetails() { return campaignDetails; }
-    public void setCampaignDetails(String campaignDetails) { this.campaignDetails = campaignDetails; }
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public String getContactPerson() {
+        return contactPerson;
+    }
+
+    public void setContactPerson(String contactPerson) {
+        this.contactPerson = contactPerson;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getCampaignDetails() {
+        return campaignDetails;
+    }
+
+    public void setCampaignDetails(String campaignDetails) {
+        this.campaignDetails = campaignDetails;
+    }
 }

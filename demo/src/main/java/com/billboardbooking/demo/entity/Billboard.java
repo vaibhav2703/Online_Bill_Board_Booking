@@ -3,13 +3,16 @@ package com.billboardbooking.demo.entity;
 import jakarta.persistence.*;
 import javax.validation.constraints.*;
 import jakarta.persistence.Lob;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "billboard")
 public class Billboard {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(generator = "billboard-id-generator")
+    @GenericGenerator(name = "billboard-id-generator", type = com.billboardbooking.demo.generator.BillboardIdGenerator.class)
+    @Column(name = "BILLBOARD_ID", length = 12)
+    private String id;
 
     @NotBlank
     private String name;
@@ -49,15 +52,15 @@ public class Billboard {
     private String image;
 
     @ManyToOne
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "OWNER_ID")
     private Owner owner;
 
     // Getters and setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

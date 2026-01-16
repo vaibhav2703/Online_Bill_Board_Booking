@@ -185,7 +185,7 @@ public class OwnerController {
 
     @PutMapping(value = "/billboards/{id}", consumes = { "multipart/form-data" })
     public ResponseEntity<?> updateBillboard(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestParam String name,
             @RequestParam String location,
             @RequestParam String address,
@@ -243,7 +243,7 @@ public class OwnerController {
     }
 
     @DeleteMapping("/billboards/{id}")
-    public ResponseEntity<?> deleteBillboard(@PathVariable Long id) {
+    public ResponseEntity<?> deleteBillboard(@PathVariable String id) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName().split("\\|")[0];
         User.Role role = User.Role.OWNER;

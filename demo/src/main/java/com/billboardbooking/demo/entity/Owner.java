@@ -2,16 +2,19 @@ package com.billboardbooking.demo.entity;
 
 import jakarta.persistence.*;
 import javax.validation.constraints.*;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "owner")
 public class Owner {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(generator = "owner-id-generator")
+    @GenericGenerator(name = "owner-id-generator", type = com.billboardbooking.demo.generator.OwnerIdGenerator.class)
+    @Column(name = "OWNER_ID", length = 12)
+    private String id;
 
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "USER_ID")
     private User user;
 
     @NotBlank
@@ -31,11 +34,11 @@ public class Owner {
     private String profileImage;
 
     // Getters and setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

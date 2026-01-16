@@ -54,7 +54,7 @@ public class BillboardController {
     }
 
     @GetMapping("/{id}")
-    public Billboard getBillboardById(@PathVariable Long id) {
+    public Billboard getBillboardById(@PathVariable String id) {
         Optional<Billboard> billboard = billboardRepository.findById(id);
         return billboard.orElse(null);
     }
@@ -147,7 +147,7 @@ public class BillboardController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateBillboard(@PathVariable Long id, @RequestBody Billboard updatedBillboard) {
+    public ResponseEntity<?> updateBillboard(@PathVariable String id, @RequestBody Billboard updatedBillboard) {
         try {
             Billboard billboard = billboardRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Billboard not found"));
@@ -178,7 +178,7 @@ public class BillboardController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBillboard(@PathVariable Long id) {
+    public ResponseEntity<?> deleteBillboard(@PathVariable String id) {
         if (!billboardRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Billboard not found");
         }

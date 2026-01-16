@@ -3,20 +3,25 @@ package com.billboardbooking.demo.entity;
 import jakarta.persistence.*;
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "booking")
 public class Booking {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(generator = "booking-id-generator")
+    @GenericGenerator(name = "booking-id-generator", type = com.billboardbooking.demo.generator.BookingIdGenerator.class)
+    @Column(name = "BOOKING_ID", length = 17)
+    private String id;
 
     @ManyToOne
     @NotNull
+    @JoinColumn(name = "BILLBOARD_ID")
     private Billboard billboard;
 
     @ManyToOne
     @NotNull
+    @JoinColumn(name = "USER_ID")
     private User user;
 
     @NotBlank
@@ -55,11 +60,11 @@ public class Booking {
     private double totalPrice;
 
     // Getters and setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

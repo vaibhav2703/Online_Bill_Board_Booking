@@ -6,7 +6,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface BillboardRepository extends JpaRepository<Billboard, Long> {
-    List<Billboard> findByOwnerId(Long ownerId);
-    List<Billboard> findByLatBetweenAndLngBetweenAndStatus(double minLat, double maxLat, double minLng, double maxLng, String status);
+public interface BillboardRepository extends JpaRepository<Billboard, String> {
+    List<Billboard> findByOwnerId(String ownerId);
+
+    List<Billboard> findByLatBetweenAndLngBetweenAndStatus(double minLat, double maxLat, double minLng, double maxLng,
+            String status);
 }
