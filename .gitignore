@@ -29,3 +29,7 @@ demo/uploads
 backend_architecture.md
 # sql file
 *.sql
+
+# Extra files
+redis_implementation.html
+redis_implementation.md

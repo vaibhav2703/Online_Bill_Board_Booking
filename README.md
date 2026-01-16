@@ -101,7 +101,7 @@ cd Online_Bill_Board_Booking
 
 1. **Navigate to Backend Directory**:
    ```bash
-   cd demo
+   cd AdNow
    ```
 
 2. **Configure Application Properties**:
@@ -199,11 +199,11 @@ cd Online_Bill_Board_Booking
 
 ```
 Online_Bill_Board_Booking/
-├── demo/                           # Backend (Spring Boot)
+├── AdNow/                           # Backend (Spring Boot)
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/
-│   │   │   │   └── com/billboardbooking/demo/
+│   │   │   │   └── com/billboardbooking/adnow/
 │   │   │   │       ├── controller/      # REST Controllers
 │   │   │   │       ├── model/           # Entity Models
 │   │   │   │       ├── repository/      # JPA Repositories
@@ -352,7 +352,7 @@ Online_Bill_Board_Booking/
 ### Backend Development
 
 ```bash
-cd demo
+cd AdNow
 
 # Run with hot reload
 mvn spring-boot:run
@@ -404,7 +404,7 @@ Solution:
 **Problem**: File upload fails
 ```
 Solution:
-1. Ensure 'uploads' directory exists in demo/
+1. Ensure 'uploads' directory exists in AdNow/
 2. Check file size limits in application.properties
 ```
 
@@ -429,7 +429,7 @@ Solution:
 **Problem**: Images not loading
 ```
 Solution:
-1. Check if images exist in demo/uploads/
+1. Check if images exist in AdNow/uploads/
 2. Verify image paths in database
 3. Ensure backend serves static files correctly
 ```
@@ -440,13 +440,13 @@ Solution:
 
 1. **Build JAR**:
    ```bash
-   cd demo
+   cd AdNow
    mvn clean package
    ```
 
 2. **Run JAR**:
    ```bash
-   java -jar target/demo-0.0.1-SNAPSHOT.jar
+   java -jar target/adnow-0.0.1-SNAPSHOT.jar
    ```
 
 ### Frontend Deployment
