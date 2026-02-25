@@ -8,6 +8,7 @@ import com.billboardbooking.adnow.repository.BillboardRepository;
 import com.billboardbooking.adnow.repository.BookingRepository;
 import com.billboardbooking.adnow.repository.OwnerRepository;
 import com.billboardbooking.adnow.repository.UserRepository;
+import com.billboardbooking.adnow.services.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -37,11 +38,23 @@ public class BillboardController {
     private OwnerRepository ownerRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private RedisService redisService;
 
     @GetMapping
     public List<Billboard> getAllBillboards() {
         updateExpiredBookings();
-        return billboardRepository.findAll();
+
+        String cacheKey = "billboards:all";
+        List<Billboard> cacheList = redisService.getCache(cacheKey);
+
+        if(cacheList != null){
+            return cacheList;
+        }
+
+        List<Billboard> billboards = billboardRepository.findAll();
+        redisService.setCache(cacheKey, billboards, 300L);
+        return billboards;
     }
 
     @GetMapping("/search")
@@ -54,9 +67,18 @@ public class BillboardController {
     }
 
     @GetMapping("/{id}")
-    public Billboard getBillboardById(@PathVariable String id) {
-        Optional<Billboard> billboard = billboardRepository.findById(id);
-        return billboard.orElse(null);
+    public ResponseEntity<Billboard> getBillboardById(@PathVariable String id) {
+        String cacheKey = "billboard:" + id;
+        Billboard cachedBillboard = redisService.getCache(cacheKey);
+        if(cachedBillboard != null){
+            return ResponseEntity.ok(cachedBillboard);
+        }
+        return billboardRepository.findById(id)
+                .map(billboard -> {
+                    redisService.setCache(cacheKey, billboard, 300L);
+                    return ResponseEntity.ok(billboard);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping(consumes = "multipart/form-data")
@@ -166,6 +188,11 @@ public class BillboardController {
             billboard.setImage(updatedBillboard.getImage());
 
             billboardRepository.save(billboard);
+
+            //delete the cache after update
+            String cacheKey = "billboard:"+id;
+            redisService.deleteCache(cacheKey);
+
             return ResponseEntity.ok(billboard);
 
         } catch (NoSuchElementException e) {
@@ -183,6 +210,10 @@ public class BillboardController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Billboard not found");
         }
         billboardRepository.deleteById(id);
+
+        String cacheKey = "billboard:"+id;
+        redisService.deleteCache(cacheKey);
+
         return ResponseEntity.ok("Billboard deleted");
     }
 

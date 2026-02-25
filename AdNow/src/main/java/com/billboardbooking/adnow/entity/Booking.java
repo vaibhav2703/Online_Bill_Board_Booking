@@ -2,12 +2,13 @@ package com.billboardbooking.adnow.entity;
 
 import jakarta.persistence.*;
 import javax.validation.constraints.*;
+import java.io.Serializable;
 import java.time.LocalDate;
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "booking")
-public class Booking {
+public class Booking implements Serializable {
     @Id
     @GeneratedValue(generator = "booking-id-generator")
     @GenericGenerator(name = "booking-id-generator", type = com.billboardbooking.adnow.generator.BookingIdGenerator.class)

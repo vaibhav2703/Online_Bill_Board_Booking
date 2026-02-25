@@ -6,6 +6,8 @@ import javax.validation.constraints.*;
 import jakarta.persistence.Index;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.io.Serializable;
+
 @Entity
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "username", "role" }),
@@ -15,7 +17,7 @@ import org.hibernate.annotations.GenericGenerator;
         @Index(name = "idx_email_role", columnList = "email, role"),
         @Index(name = "idx_reset_token", columnList = "resetToken")
 })
-public class User {
+public class User implements Serializable {
     @Id
     @GeneratedValue(generator = "user-id-generator")
     @GenericGenerator(name = "user-id-generator", type = com.billboardbooking.adnow.generator.UserIdGenerator.class)

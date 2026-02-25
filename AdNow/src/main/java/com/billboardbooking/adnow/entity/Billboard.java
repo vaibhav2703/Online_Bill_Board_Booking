@@ -5,9 +5,11 @@ import javax.validation.constraints.*;
 import jakarta.persistence.Lob;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.io.Serializable;
+
 @Entity
 @Table(name = "billboard")
-public class Billboard {
+public class Billboard implements Serializable {
     @Id
     @GeneratedValue(generator = "billboard-id-generator")
     @GenericGenerator(name = "billboard-id-generator", type = com.billboardbooking.adnow.generator.BillboardIdGenerator.class)

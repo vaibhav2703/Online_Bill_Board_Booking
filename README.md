@@ -5,6 +5,7 @@ A modern, full-stack web application for managing and booking billboards. The pl
 ![Tech Stack](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
 ## ✨ Features
@@ -30,6 +31,7 @@ A modern, full-stack web application for managing and booking billboards. The pl
 - 🌍 **Location Services**: Integrated mapping with Leaflet
 - 📱 **Responsive Design**: Works seamlessly on all devices
 - ⚡ **Fast Performance**: Built with Vite for lightning-fast development
+- 🗄️ **Redis Caching**: Improved API response times with Redis caching
 
 ## 🛠️ Tech Stack
 
@@ -37,6 +39,7 @@ A modern, full-stack web application for managing and booking billboards. The pl
 - **Framework**: Spring Boot 3.x (Java 17)
 - **Security**: Spring Security with JWT
 - **Database**: MySQL 8.0
+- **Caching**: Redis (with Spring Data Redis & Lettuce)
 - **ORM**: Spring Data JPA / Hibernate
 - **Build Tool**: Maven
 - **Email**: JavaMailSender
@@ -60,6 +63,7 @@ Before you begin, ensure you have the following installed:
 - **Node.js**: Version 16 or higher
 - **npm**: Version 8 or higher (comes with Node.js)
 - **MySQL**: Version 8.0 or higher
+- **Redis**: Version 6.0 or higher
 - **Maven**: Version 3.6 or higher
 - **Git**: For version control
 
@@ -106,46 +110,21 @@ cd Online_Bill_Board_Booking
 
 2. **Configure Application Properties**:
    
-   Create `src/main/resources/application.properties` with the following content:
+   Copy the example file and update it with your credentials:
    
-   ```properties
-   # Server Configuration
-   server.port=8080
-   
-   # Database Configuration
-   spring.datasource.url=jdbc:mysql://localhost:3306/adnow
-   spring.datasource.username=root
-   spring.datasource.password=YOUR_MYSQL_PASSWORD
-   spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-   
-   # JPA/Hibernate Configuration
-   spring.jpa.hibernate.ddl-auto=update
-   spring.jpa.show-sql=true
-   spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
-   spring.jpa.properties.hibernate.format_sql=true
-   
-   # JWT Configuration
-   jwt.secret=YOUR_SECRET_KEY_HERE_MAKE_IT_LONG_AND_SECURE
-   jwt.expiration=86400000
-   
-   # File Upload Configuration
-   spring.servlet.multipart.max-file-size=10MB
-   spring.servlet.multipart.max-request-size=10MB
-   file.upload-dir=./uploads
-   
-   # Email Configuration (Gmail example)
-   spring.mail.host=smtp.gmail.com
-   spring.mail.port=587
-   spring.mail.username=your-email@gmail.com
-   spring.mail.password=your-app-specific-password
-   spring.mail.properties.mail.smtp.auth=true
-   spring.mail.properties.mail.smtp.starttls.enable=true
-   
-   # Logging
-   logging.level.com.billboardbooking=DEBUG
+   ```bash
+   cp src/main/resources/application.properties.example src/main/resources/application.properties
    ```
+   
+   Then edit `src/main/resources/application.properties` and replace the placeholder values:
+   
+   - `your_database` → your MySQL database name (e.g., `adnow`)
+   - `your_username` → your MySQL username
+   - `your_password` → your MySQL password
+   - `your-email@gmail.com` → your Gmail address
+   - `your-app-password` → your Gmail app-specific password
 
-   > **Important**: Replace `YOUR_MYSQL_PASSWORD`, `YOUR_SECRET_KEY_HERE`, and email credentials with your actual values.
+   > **Important**: The `application.properties` file contains sensitive credentials and is excluded from version control via `.gitignore`. Never commit it directly.
 
 3. **Create Uploads Directory**:
    ```bash
@@ -164,7 +143,7 @@ cd Online_Bill_Board_Booking
 5. **Verify Backend is Running**:
    - Open browser and navigate to `http://localhost:8080`
    - You should see the application running
-   - Check console for "Started DemoApplication" message
+   - Check console for "Started AdNow" message
 
 ### 4. Frontend Setup (Frontend_2.0)
 
@@ -209,9 +188,11 @@ Online_Bill_Board_Booking/
 │   │   │   │       ├── repository/      # JPA Repositories
 │   │   │   │       ├── service/         # Business Logic
 │   │   │   │       ├── security/        # JWT & Security Config
+│   │   │   │       ├── config/          # App Configuration (Redis, CORS, etc.)
 │   │   │   │       └── dto/             # Data Transfer Objects
 │   │   │   └── resources/
-│   │   │       └── application.properties
+│   │   │       ├── application.properties
+│   │   │       └── application.properties.example
 │   │   └── test/
 │   ├── uploads/                    # Uploaded billboard images
 │   └── pom.xml
@@ -394,6 +375,14 @@ Solution:
 3. Ensure database 'adnow' exists
 ```
 
+**Problem**: Redis connection error
+```
+Solution:
+1. Ensure Redis server is running (redis-cli ping should return PONG)
+2. Check Redis host and port in application.properties
+3. Verify Redis connection pool settings
+```
+
 **Problem**: Port 8080 already in use
 ```
 Solution:
@@ -462,13 +451,20 @@ Solution:
 ## 📝 Environment Variables
 
 ### Backend (application.properties)
-- `server.port` - Server port (default: 8080)
-- `spring.datasource.url` - Database URL
-- `spring.datasource.username` - Database username
-- `spring.datasource.password` - Database password
-- `jwt.secret` - JWT secret key
-- `jwt.expiration` - Token expiration time
-- `spring.mail.*` - Email configuration
+
+Refer to [`application.properties.example`](AdNow/src/main/resources/application.properties.example) for a complete template.
+
+| Property | Description |
+|---|---|
+| `spring.datasource.url` | MySQL database URL |
+| `spring.datasource.username` | Database username |
+| `spring.datasource.password` | Database password |
+| `spring.data.redis.host` | Redis server host (default: `localhost`) |
+| `spring.data.redis.port` | Redis server port (default: `6379`) |
+| `spring.data.redis.timeout` | Redis connection timeout |
+| `spring.mail.*` | Email (SMTP) configuration |
+| `file.upload-dir` | Directory for uploaded billboard images |
+| `spring.servlet.multipart.max-file-size` | Max upload file size |
 
 ### Frontend (.env)
 - `VITE_API_BASE_URL` - Backend API URL (default: http://localhost:8080)

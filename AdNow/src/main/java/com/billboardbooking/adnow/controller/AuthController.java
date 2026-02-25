@@ -7,6 +7,8 @@ import com.billboardbooking.adnow.entity.User;
 import com.billboardbooking.adnow.entity.Owner;
 import com.billboardbooking.adnow.service.EmailService;
 
+import com.billboardbooking.adnow.services.RedisService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +27,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
+@Slf4j
 public class AuthController {
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -47,6 +50,9 @@ public class AuthController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private RedisService redisService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
         String identifier = request.get("identifier");
@@ -59,6 +65,8 @@ public class AuthController {
 
         try {
             User.Role role = User.Role.valueOf(selectedRole);
+
+            // Find user by username or email
             Optional<User> userOptional = userRepository.findByUsernameAndRole(identifier, role);
             if (!userOptional.isPresent()) {
                 userOptional = userRepository.findByEmailAndRole(identifier, role);
@@ -70,22 +78,30 @@ public class AuthController {
 
             String username = user.getUsername() + "|" + user.getRole().name();
 
+            // Authenticate with the password
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+
+            // This will use cached user data from CustomUserDetailsService
             final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             final String jwt = jwtUtil.generateToken(userDetails);
+
             Map<String, String> response = new HashMap<>();
             response.put("token", jwt);
             response.put("role", user.getRole().name());
+
             return ResponseEntity.ok(response);
         } catch (AuthenticationException e) {
+            log.error("Authentication failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         } catch (Exception e) {
+            log.error("Login failed with exception: " + e.getMessage());
+            e.printStackTrace(); // Print full stack trace to console
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Login failed: " + e.getMessage());
         }
     }
 
     @PostMapping("/register/user")
-    public ResponseEntity<?> registerUser (@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> registerUser(@RequestBody Map<String, String> request) {
         try {
             String username = request.get("username");
             String password = request.get("password");
@@ -157,10 +173,10 @@ public class AuthController {
             user.setPhone(phone);
             user.setRole(User.Role.OWNER);
 
-            User savedUser  = userRepository.save(user);
+            User savedUser = userRepository.save(user);
 
             Owner owner = new Owner();
-            owner.setUser (savedUser );
+            owner.setUser(savedUser);
             owner.setName(name);
             owner.setEmail(email);
             owner.setPhone(phone);
@@ -208,7 +224,8 @@ public class AuthController {
 
             return ResponseEntity.ok("Password reset email sent successfully");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error sending password reset email: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error sending password reset email: " + e.getMessage());
         }
     }
 
@@ -239,7 +256,8 @@ public class AuthController {
 
             return ResponseEntity.ok("Password reset successfully");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error resetting password: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error resetting password: " + e.getMessage());
         }
     }
 }

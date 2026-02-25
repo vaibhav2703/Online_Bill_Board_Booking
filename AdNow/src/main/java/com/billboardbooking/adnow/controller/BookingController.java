@@ -6,6 +6,7 @@ import com.billboardbooking.adnow.entity.User;
 import com.billboardbooking.adnow.repository.BookingRepository;
 import com.billboardbooking.adnow.repository.BillboardRepository;
 import com.billboardbooking.adnow.repository.UserRepository;
+import com.billboardbooking.adnow.services.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -15,12 +16,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.awt.print.Book;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -38,6 +41,8 @@ public class BookingController {
     private BillboardRepository billboardRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    RedisService redisService;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -100,26 +105,40 @@ public class BookingController {
 
     @GetMapping
     public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+        String cacheKey = "bookings:all";
+        List<Booking> bookingListCache = redisService.getCache(cacheKey);
+        if (bookingListCache != null) {
+            return bookingListCache;
+        }
+        List<Booking> allBookingList = bookingRepository.findAll();
+        redisService.setCache(cacheKey, allBookingList, 300L);
+        return allBookingList;
     }
 
     @GetMapping("/user")
     public List<Booking> getUserBookings() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            return java.util.Collections.emptyList();
+            return Collections.emptyList();
         }
         String username = authentication.getName();
         String[] parts = username.split("\\|", 2);
         if (parts.length != 2) {
-            return java.util.Collections.emptyList();
+            return Collections.emptyList();
         }
         String actualUsername = parts[0];
+        String cacheKey = "bookings:" + actualUsername;
+        List<Booking> bookingCacheList = redisService.getCache(cacheKey);
+        if (bookingCacheList != null) {
+            return bookingCacheList;
+        }
         User.Role role = User.Role.valueOf(parts[1]);
         Optional<User> userOpt = userRepository.findByUsernameAndRole(actualUsername, role);
         if (!userOpt.isPresent()) {
-            return java.util.Collections.emptyList();
+            return Collections.emptyList();
         }
-        return bookingRepository.findByUserId(userOpt.get().getId());
+        List<Booking> userBookings = bookingRepository.findByUserId(userOpt.get().getId());
+        redisService.setCache(cacheKey, userBookings, 300L);
+        return userBookings;
     }
 }

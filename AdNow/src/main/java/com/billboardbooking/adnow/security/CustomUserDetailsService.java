@@ -5,6 +5,7 @@ import com.billboardbooking.adnow.entity.Owner;
 import com.billboardbooking.adnow.repository.UserRepository;
 import com.billboardbooking.adnow.repository.OwnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -29,6 +30,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
 
     @Override
+    @Cacheable(value = "userCache", key = "#username")
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // username is in format "actualUsername|ROLE"
         String[] parts = username.split("\\|", 2);
@@ -43,7 +45,8 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User does not exist");
         }
         User user = userOptional.get();
-        return org.springframework.security.core.userdetails.User.withUsername(user.getUsername() + "|" + user.getRole().name())
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getUsername() + "|" + user.getRole().name())
                 .password(user.getPassword()) // already encoded
                 .roles(user.getRole().name()) // Spring adds "ROLE_" prefix automatically
                 .build();
