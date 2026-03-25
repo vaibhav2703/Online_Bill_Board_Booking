@@ -8,14 +8,14 @@ import com.billboardbooking.adnow.repository.BillboardRepository;
 import com.billboardbooking.adnow.repository.BookingRepository;
 import com.billboardbooking.adnow.repository.OwnerRepository;
 import com.billboardbooking.adnow.repository.UserRepository;
-import com.billboardbooking.adnow.services.RedisService;
+import com.billboardbooking.adnow.service.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.time.LocalDate;
-import javax.validation.Valid;
+
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;

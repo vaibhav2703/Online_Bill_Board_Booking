@@ -1,8 +1,5 @@
-package com.billboardbooking.adnow.services;
+package com.billboardbooking.adnow.service;
 
-import com.billboardbooking.adnow.entity.Billboard;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;

@@ -7,7 +7,7 @@ import com.billboardbooking.adnow.entity.User;
 import com.billboardbooking.adnow.entity.Owner;
 import com.billboardbooking.adnow.service.EmailService;
 
-import com.billboardbooking.adnow.services.RedisService;
+import com.billboardbooking.adnow.service.RedisService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
