@@ -1,8 +1,12 @@
 package com.billboardbooking.adnow.security;
 
+import com.billboardbooking.adnow.config.JwtConfiguration;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -10,10 +14,27 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 @Component
+@Slf4j
 public class JwtUtil {
-    private final String SECRET_KEY = "VAIBHAVNARWADE7117MARCH2002Billboard27032002";
+    //private final String SECRET_KEY = "VAIBHAVNARWADE7117MARCH2002Billboard27032002";
+
+    private final JwtConfiguration jwtConfiguration;
+    private final String SECRET_KEY;
+
+    @Autowired
+    public JwtUtil(JwtConfiguration jwtConfiguration) {
+        this.jwtConfiguration = jwtConfiguration;
+        try {
+            this.SECRET_KEY = jwtConfiguration.getSecreteKey();
+        } catch (Exception e) {
+            log.error("JWT Secret Key not found", e);
+            throw new RuntimeException("Failed to initialize JwtUtil: Secret Key not found", e);
+        }
+    }
+
     private final long EXPIRATION_TIME = 1000 * 60 * 60 * 10; // 10 hours
 
     public String extractUsername(String token) {

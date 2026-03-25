@@ -34,3 +34,7 @@ spring.mail.username=your-email@gmail.com
 spring.mail.password=your-app-password
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
+
+
+# JWT token generation key
+jwt.secrete.key=Place_your_own_secrete_key
